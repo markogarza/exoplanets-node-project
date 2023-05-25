@@ -1,16 +1,37 @@
 const { parse } = require('csv-parse');
 const fs = require('fs');
 
-const results = [];
+const habitablePlanets = [];
+
+const isHabitablePlanet = (planet) => {
+  return (
+    planet['koi_disposition'] === 'CONFIRMED' &&
+    planet['koi_insol'] > 0.36 &&
+    planet['koi_insol'] < 1.11 &&
+    planet['koi_prad'] < 1.6
+  );
+};
 
 fs.createReadStream('kepler_data.csv')
+  .pipe(
+    parse({
+      comment: '#',
+      columns: true,
+    })
+  )
   .on('data', (data) => {
-    console.log(data);
-    results.push(data);
+    if (isHabitablePlanet(data)) {
+      habitablePlanets.push(data);
+    }
   })
   .on('error', (err) => {
     return console.log(err);
   })
   .on('end', (end) => {
-    console.log(`this is the end: ${end}`);
+    console.log(
+      habitablePlanets.map((el) => {
+        return el['kepler_name'];
+      })
+    );
+    console.log(`${habitablePlanets.length} habitable planets that were found`);
   });
